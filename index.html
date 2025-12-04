@@ -15,11 +15,12 @@
     }
 
     :root[data-theme="light"] {
-      --bg: radial-gradient(circle at 25% -10%, rgba(246, 201, 14, 0.18), transparent 30%), radial-gradient(circle at 75% 110%, rgba(37, 99, 235, 0.12), transparent 32%), #ffffff;
+      --bg: radial-gradient(circle at 25% -10%, rgba(246, 201, 14, 0.18), transparent 30%), radial-gradient(circle at 75% 110%, rgba(13, 17, 28, 0.22), transparent 32%), #ffffff;
+      --bg-base: #ffffff;
       --panel: #ffffff;
       --panel-strong: #f1f5f9;
       --accent: #f6c90e;
-      --accent-2: #1d4ed8;
+      --accent-2: #0d111c;
       --text: #0b1120;
       --subtext: #4b5563;
       --danger: #d32f2f;
@@ -32,11 +33,12 @@
     }
 
     :root[data-theme="dark"] {
-      --bg: radial-gradient(circle at 50% -10%, rgba(246, 201, 14, 0.3), transparent 35%), radial-gradient(circle at 45% 120%, rgba(37, 99, 235, 0.28), transparent 38%), linear-gradient(140deg, #0b1224, #0f274d 50%, #0b1936 100%);
+      --bg: radial-gradient(circle at 50% -10%, rgba(246, 201, 14, 0.3), transparent 35%), radial-gradient(circle at 45% 120%, rgba(13, 17, 28, 0.3), transparent 38%), linear-gradient(140deg, #04060c, #0b0f1a 50%, #05070d 100%);
+      --bg-base: #04060c;
       --panel: rgba(255, 255, 255, 0.1);
       --panel-strong: rgba(255, 255, 255, 0.18);
       --accent: #f6c90e;
-      --accent-2: #4f8bff;
+      --accent-2: #0d111c;
       --text: #fdfdfd;
       --subtext: #d8deef;
       --danger: #ffb3ba;
@@ -54,10 +56,21 @@
       margin: 0;
       min-height: 100vh;
       font-family: var(--font-body);
-      background: var(--bg);
+      background: var(--bg-base);
       color: var(--text);
       padding: 28px 18px 48px;
       transition: background 0.3s ease, color 0.3s ease;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: -1;
+      pointer-events: none;
     }
 
     .app {
@@ -140,6 +153,12 @@
     .ghost:hover { filter: none; transform: none; }
     .ghost:active { filter: none; }
 
+    #refresh {
+      background: var(--accent);
+      box-shadow: 0 12px 24px rgba(246, 201, 14, 0.35);
+      color: #0b1120;
+    }
+
     .status {
       color: var(--subtext);
       font-size: 14px;
@@ -177,7 +196,7 @@
     .pill {
       padding: 6px 10px;
       border-radius: 999px;
-      background: linear-gradient(135deg, rgba(246, 201, 14, 0.2), rgba(37, 99, 235, 0.16));
+      background: linear-gradient(135deg, rgba(246, 201, 14, 0.2), rgba(13, 17, 28, 0.18));
       color: var(--text);
       font-size: 13px;
       font-weight: 700;
@@ -223,6 +242,27 @@
 
     .metric .positive { color: var(--positive); }
     .metric .negative { color: var(--danger); }
+
+    .ev-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .profit-chip {
+      padding: 4px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #0b1120;
+      background: var(--accent);
+    }
+
+    .profit-chip.negative {
+      color: #fdfdfd;
+      background: #b00020;
+    }
 
     .card-toggle {
       margin-top: 10px;
@@ -297,6 +337,38 @@
     }
     .value-cell { color: var(--text); white-space: nowrap; }
     .prob-cell { color: var(--subtext); white-space: nowrap; }
+
+    .card-row {
+      position: relative;
+    }
+
+    .card-preview {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      transform: translateY(6px);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px;
+      box-shadow: 0 16px 30px rgba(0, 0, 0, 0.16);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+      z-index: 2;
+      min-width: 160px;
+    }
+
+    .card-row:hover .card-preview {
+      opacity: 1;
+    }
+
+    .card-preview img {
+      width: 160px;
+      height: auto;
+      display: block;
+      border-radius: 8px;
+    }
 
     .empty {
       color: var(--subtext);
@@ -445,11 +517,18 @@
         const setYear = [card.year, card.set].filter(Boolean).join(' · ');
         const grading = [card.gradingCompany, card.grading].filter(Boolean).join(' ');
         const metaPieces = [setYear, grading].filter(Boolean);
+        const imageUrl = card.image || (Array.isArray(card.images) && card.images[0]?.url) || '';
+        const preview = imageUrl ? `
+          <div class="card-preview">
+            <img src="${imageUrl}" alt="${title}">
+          </div>
+        ` : '';
         return `
-          <tr>
+          <tr class="card-row">
             <td>
               <span class="card-name">${title}</span>
               ${metaPieces.length ? `<span class="card-meta">${metaPieces.join(' • ')}</span>` : ''}
+              ${preview}
             </td>
             <td class="value-cell">${currency.format(Number(card.fmv))}</td>
             <td class="prob-cell">${probDisplay}%</td>
@@ -466,7 +545,12 @@
           <div class="metrics">
             <div class="metric">
               <label>Expected Value</label>
-              <strong>${currency.format(metrics.expectedValue)}</strong>
+              <div class="ev-row">
+                <strong>${currency.format(metrics.expectedValue)}</strong>
+                <span class="profit-chip ${metrics.profitPercent >= 0 ? '' : 'negative'}">
+                  ${metrics.profitPercent >= 0 ? '+' : ''}${percent.format(metrics.profitPercent)}%
+                </span>
+              </div>
               <small>Pack price ${currency.format(metrics.costOfPack)}</small>
             </div>
             <div class="metric">
@@ -478,13 +562,6 @@
               <label>Profit Odds</label>
               <strong>${percent.format(metrics.oddsOverCost)}%</strong>
               <small>Chance pull ≥ pack cost</small>
-            </div>
-            <div class="metric">
-              <label>Profitability</label>
-              <strong class="${metrics.profitPercent >= 0 ? 'positive' : 'negative'}">
-                ${metrics.profitPercent >= 0 ? '+' : ''}${percent.format(metrics.profitPercent)}%
-              </strong>
-              <small>EV vs cost</small>
             </div>
           </div>
           ${cards.length ? `
