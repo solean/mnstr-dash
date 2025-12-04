@@ -39,6 +39,27 @@ async function calculateExpectedValue(tier) {
     return sum + p * value;
   }, 0);
 
+  // --- Compute median card value (weighted by probability) ---
+  const sortedCards = [...cards].sort((a, b) => Number(a.fmv) - Number(b.fmv));
+  let cumulativeProb = 0;
+  let medianCardValue = 0;
+  for (const card of sortedCards) {
+    cumulativeProb += Number(card.probability) * probScale;
+    if (cumulativeProb >= 0.5) {
+      medianCardValue = Number(card.fmv);
+      break;
+    }
+  }
+
+  // --- Compute odds of pulling a card worth more than pack cost ---
+  const oddsOverCost = cards.reduce((sum, card) => {
+    if (Number(card.fmv) >= costOfPack) {
+      return sum + Number(card.probability) * probScale;
+    }
+    return sum;
+  }, 0);
+  const oddsOverCostPercent = oddsOverCost * 100;
+
   // Expected profit after paying for the pack
   const expectedProfit = expectedCardValue - costOfPack;
   const evPercent = (expectedCardValue / costOfPack) * 100;
@@ -46,11 +67,13 @@ async function calculateExpectedValue(tier) {
 
   console.log(`\n=== ${tier} Pack ===`);
   console.log("Expected card value:", expectedCardValue.toFixed(2));
+  console.log("Median card value:", medianCardValue.toFixed(2));
   console.log("Cost of pack:", costOfPack.toFixed(2));
   console.log("Expected profit (value - cost):", expectedProfit.toFixed(2));
   console.log(`EV: ${evPercent.toFixed(2)}% | Profit: ${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(2)}%`);
+  console.log(`Odds of pulling card >= pack cost: ${oddsOverCostPercent.toFixed(2)}%`);
 
-  return { tier, expectedCardValue, costOfPack, expectedProfit, evPercent, profitPercent };
+  return { tier, expectedCardValue, medianCardValue, costOfPack, expectedProfit, evPercent, profitPercent, oddsOverCostPercent };
 }
 
 // Run for both tiers
