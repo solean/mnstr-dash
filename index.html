@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bungee:wght@400&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <style>
     :root {
       --font-heading: 'Bungee', 'Space Grotesk', system-ui, -apple-system, sans-serif;
@@ -203,6 +204,13 @@
       border: 1px solid var(--border);
     }
 
+    .pill.price {
+      background: linear-gradient(135deg, rgba(183, 255, 204, 0.8), rgba(116, 206, 147, 0.8));
+      color: #0b1120;
+      border: 1px solid rgba(33, 150, 83, 0.35);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
     .metrics {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -391,6 +399,30 @@
       font-size: 14px;
     }
 
+    .chart-box {
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 14px;
+      background: var(--panel-strong);
+      border: 1px solid var(--border);
+      position: relative;
+      height: 200px;
+      overflow: hidden;
+    }
+
+    .chart-box h3 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      color: var(--subtext);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .chart-box canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
     @media (max-width: 640px) {
       body { padding: 18px 14px 34px; }
       header { padding: 18px 16px; }
@@ -430,6 +462,7 @@
     const loaderEl = document.getElementById('loader');
     const refreshBtn = document.getElementById('refresh');
     const themeToggle = document.getElementById('theme-toggle');
+    const chartRegistry = {};
 
     refreshBtn.addEventListener('click', () => loadData());
     themeToggle.addEventListener('click', () => {
@@ -495,6 +528,7 @@
       const profit = expectedValue - costOfPack;
       const evPercent = (expectedValue / costOfPack) * 100;
       const profitPercent = (profit / costOfPack) * 100;
+      const medianPercent = ((medianValue - costOfPack) / costOfPack) * 100;
 
       return {
         expectedValue,
@@ -504,12 +538,26 @@
         profit,
         evPercent,
         profitPercent,
+        medianPercent,
         probScale: scale
       };
     }
 
+    function buildProfitCurve(cards, priceUsd, scale) {
+      const sorted = [...cards].sort((a, b) => Number(a.fmv) - Number(b.fmv));
+      let tailProb = sorted.reduce((sum, card) => sum + Number(card.probability) * scale, 0);
+      const points = sorted.map(card => {
+        const value = Number(card.fmv);
+        const profitPct = ((value - priceUsd) / priceUsd) * 100;
+        const y = tailProb * 100; // cumulative probability of pulling >= this value
+        tailProb -= Number(card.probability) * scale;
+        return { x: value, y, profitPct };
+      });
+      return points;
+    }
+
     function renderTier(tierName, tierInfo) {
-      const { cards, metrics } = tierInfo;
+      const { cards, metrics, curve } = tierInfo;
       const cardRows = cards.map(card => {
         const chance = Number(card.probability) * metrics.probScale * 100;
         const probDisplay = percent.format(chance);
@@ -536,11 +584,16 @@
         `;
       }).join('');
 
+      const canvasId = `chart-${tierName.replace(/\\s+/g, '-').toLowerCase()}`;
+
       return `
         <section class="tier">
           <div class="tier-head">
             <h2>${tierName} Pack</h2>
-            <span class="pill">${cards.length} chase cards</span>
+            <div class="actions" style="margin:0;gap:8px;">
+              <span class="pill price">Pack price ${currency.format(metrics.costOfPack)}</span>
+              <span class="pill">${cards.length} cards</span>
+            </div>
           </div>
           <div class="metrics">
             <div class="metric">
@@ -555,7 +608,12 @@
             </div>
             <div class="metric">
               <label>Median Card</label>
-              <strong>${currency.format(metrics.medianValue)}</strong>
+              <div class="ev-row">
+                <strong>${currency.format(metrics.medianValue)}</strong>
+                <span class="profit-chip ${metrics.medianPercent >= 0 ? '' : 'negative'}">
+                  ${metrics.medianPercent >= 0 ? '+' : ''}${percent.format(metrics.medianPercent)}%
+                </span>
+              </div>
               <small>50% of pulls at least this value</small>
             </div>
             <div class="metric">
@@ -567,7 +625,7 @@
           ${cards.length ? `
             <details class="card-toggle">
               <summary>
-                <span>Show chase cards (${cards.length})</span>
+                <span>Show cards (${cards.length})</span>
                 <span class="chevron">⌄</span>
               </summary>
               <div class="card-table">
@@ -583,9 +641,70 @@
                 </table>
               </div>
             </details>
+            <div class="chart-box">
+              <h3>Profitability curve</h3>
+              <canvas id="${canvasId}"></canvas>
+            </div>
           ` : '<p class="empty">No card data available.</p>'}
         </section>
       `;
+    }
+
+    function renderCharts(tierResults) {
+      // Clean up old charts
+      Object.values(chartRegistry).forEach(chart => chart.destroy());
+
+      tierResults.forEach(({ tierName, curve }) => {
+        const canvasId = `chart-${tierName.replace(/\\s+/g, '-').toLowerCase()}`;
+        const ctx = document.getElementById(canvasId);
+        if (!ctx || !curve || !curve.length) return;
+
+        chartRegistry[tierName] = new Chart(ctx, {
+          type: 'line',
+          data: {
+            datasets: [{
+              label: 'Odds of pulling ≥ value',
+              data: curve.map(pt => ({ x: pt.x, y: pt.y })),
+              borderColor: 'rgba(13, 17, 28, 0.7)',
+              backgroundColor: 'rgba(246, 201, 14, 0.35)',
+              fill: true,
+              tension: 0.3,
+              pointRadius: 3,
+              pointBackgroundColor: '#f6c90e',
+              pointBorderColor: '#0d111c'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                type: 'linear',
+                title: { display: true, text: 'Card FMV ($)' },
+                ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--subtext') }
+              },
+              y: {
+                beginAtZero: true,
+                title: { display: true, text: 'Probability (%)' },
+                ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--subtext') }
+              }
+            },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: ctx => {
+                    const val = currency.format(ctx.parsed.x);
+                    const prob = percent.format(ctx.parsed.y);
+                    return `${prob}% odds of pulling ≥ ${val}`;
+                  }
+                }
+              },
+              decimation: { enabled: false }
+            }
+          }
+        });
+      });
     }
 
     async function loadData() {
@@ -609,12 +728,14 @@
           const payload = await cardRes.json();
           const cards = payload.data || [];
           const metrics = computeMetrics(cards, priceData.data[tierName].priceUsd);
-          return { tierName, cards, metrics };
+          const curve = buildProfitCurve(cards, metrics.costOfPack, metrics.probScale);
+          return { tierName, cards, metrics, curve };
         }));
 
         tierContainer.innerHTML = tierResults
-          .map(({ tierName, cards, metrics }) => renderTier(tierName, { cards, metrics }))
+          .map(({ tierName, cards, metrics, curve }) => renderTier(tierName, { cards, metrics, curve }))
           .join('');
+        renderCharts(tierResults);
 
         const time = new Date();
         statusEl.textContent = `Updated ${time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
