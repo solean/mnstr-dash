@@ -72,7 +72,7 @@ header {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: linear-gradient(135deg, var(--panel), rgba(255, 255, 255, 0.08));
+  background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 18px;
   padding: 22px 22px 18px;
@@ -105,11 +105,10 @@ h1 {
 }
 
 .hero {
-  display: grid;
-  grid-template-columns: 1fr 260px;
-  grid-template-rows: auto auto;
-  gap: 12px 16px;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
 }
 
 .hero-copy {
@@ -119,14 +118,12 @@ h1 {
 }
 
 .hero-visual {
-  justify-self: end;
-  align-self: end;
-  grid-row: 1 / span 2;
+  align-self: flex-start;
 }
 
 .card-image {
   width: 100%;
-  max-width: 260px;
+  /* max-width: 260px; */
   border-radius: 16px;
   box-shadow: 0 18px 36px rgba(0, 0, 0, 0.25);
   border: 1px solid var(--border);
@@ -148,7 +145,7 @@ h1 {
 }
 
 .header-actions {
-  margin-top: 0;
+  margin-top: 20px;
   justify-content: flex-start;
   gap: 10px;
   grid-column: 1;
@@ -191,7 +188,7 @@ button:active {
 
 #refresh {
   background: var(--accent);
-  box-shadow: 0 12px 24px rgba(246, 201, 14, 0.35);
+  box-shadow: 0 4px 24px rgba(246, 201, 14, 0.35);
   color: #0b1120;
 }
 
@@ -467,19 +464,25 @@ tr + tr td {
   th, td { font-size: 13px; }
 }
 
-@media (max-width: 768px) {
-  .hero {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
+@media (min-width: 960px) {
+  .app {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 16px 18px;
+    align-items: start;
   }
 
-  .hero-visual {
-    justify-self: start;
-    grid-row: 2;
-    align-self: start;
+  header {
+    grid-column: 1;
   }
 
-  .header-actions {
-    grid-row: 3;
+  main,
+  .loader,
+  .error {
+    grid-column: 2;
+  }
+
+  main {
+    margin-top: 0;
   }
 }
