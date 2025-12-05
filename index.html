@@ -15,20 +15,18 @@
     <header>
       <div class="hero">
         <div class="hero-copy">
-          <p class="eyebrow">Live EV Monitor</p>
-          <h1>MNSTR Gacha Dashboard</h1>
-          <p class="lede">Pull fresh pack pricing and chase card odds straight from the MNSTR API. We compute expected value, profit, and hit odds so you know how the packs pencil out right now.</p>
-          <div class="actions">
-            <button id="refresh">Refresh data</button>
-            <button id="theme-toggle" class="ghost" type="button">Dark mode</button>
-            <a class="ghost" href="https://mnstr.xyz" target="_blank" rel="noreferrer">mnstr.xyz</a>
-            <span class="status" id="status">Waiting to load…</span>
-          </div>
+          <h1><a href="https://mnstr.xyz" target="_blank" rel="noreferrer" style="color: inherit; text-decoration: none;">MNSTR</a> Gacha Dashboard</h1>
+          <p class="lede">Metrics from <a href="https://mnstr.xyz" target="_blank" rel="noreferrer" style="color: #0070ff; text-decoration: underline;">mnstr.xyz</a></p>
         </div>
         <div class="hero-visual">
           <div class="card-image">
             <img src="public/images/gambol.jpeg" alt="Featured card">
           </div>
+        </div>
+        <div class="actions header-actions">
+          <button id="refresh">Refresh data</button>
+          <button id="theme-toggle" class="ghost" type="button">Dark mode</button>
+          <span class="status" id="status">Waiting to load…</span>
         </div>
       </div>
     </header>
@@ -136,7 +134,8 @@
       const sorted = [...cards].sort((a, b) => Number(a.fmv) - Number(b.fmv));
       let tailProb = sorted.reduce((sum, card) => sum + Number(card.probability) * scale, 0);
       const points = sorted.map(card => {
-        const value = Number(card.fmv);
+        // Keep values positive so log scales render safely
+        const value = Math.max(Number(card.fmv), 0.01);
         const profitPct = ((value - priceUsd) / priceUsd) * 100;
         const y = tailProb * 100; // cumulative probability of pulling >= this value
         tailProb -= Number(card.probability) * scale;
@@ -231,7 +230,7 @@
               </div>
             </details>
             <div class="chart-box">
-              <h3>Profitability curve</h3>
+              <h3>EV curve</h3>
               <canvas id="${canvasId}"></canvas>
             </div>
           ` : '<p class="empty">No card data available.</p>'}
@@ -266,16 +265,28 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
+            layout: {
+              padding: {
+                bottom: 24
+              }
+            },
             scales: {
               x: {
-                type: 'linear',
-                title: { display: true, text: 'Card FMV ($)' },
-                ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--subtext') }
+                type: 'logarithmic',
+                title: { display: true, text: 'Card FMV ($, log scale)' },
+                ticks: {
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--subtext'),
+                  callback: val => currency.format(val)
+                }
               },
               y: {
                 beginAtZero: true,
+                suggestedMax: 120,
                 title: { display: true, text: 'Probability (%)' },
-                ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--subtext') }
+                ticks: {
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--subtext'),
+                  callback: val => val > 100 ? '' : val
+                }
               }
             },
             plugins: {
