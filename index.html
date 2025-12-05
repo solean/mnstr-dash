@@ -13,12 +13,23 @@
 <body>
   <div class="app">
     <header>
-      <h1>MNSTR Gacha Dashboard</h1>
-      <p class="lede">Pull fresh pack pricing and chase card odds straight from the MNSTR API. We compute expected value, profit, and hit odds so you know how the packs pencil out right now.</p>
-      <div class="actions">
-        <button id="refresh">Refresh data</button>
-        <button id="theme-toggle" class="ghost" type="button">Dark mode</button>
-        <span class="status" id="status">Waiting to load…</span>
+      <div class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Live EV Monitor</p>
+          <h1>MNSTR Gacha Dashboard</h1>
+          <p class="lede">Pull fresh pack pricing and chase card odds straight from the MNSTR API. We compute expected value, profit, and hit odds so you know how the packs pencil out right now.</p>
+          <div class="actions">
+            <button id="refresh">Refresh data</button>
+            <button id="theme-toggle" class="ghost" type="button">Dark mode</button>
+            <a class="ghost" href="https://mnstr.xyz" target="_blank" rel="noreferrer">mnstr.xyz</a>
+            <span class="status" id="status">Waiting to load…</span>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="card-image">
+            <img src="public/images/gambol.jpeg" alt="Featured card">
+          </div>
+        </div>
       </div>
     </header>
 
@@ -170,7 +181,7 @@
             <h2>${tierName} Pack</h2>
             <div class="actions" style="margin:0;gap:8px;">
               <span class="pill price">Pack price ${currency.format(metrics.costOfPack)}</span>
-              <span class="pill">${cards.length} cards</span>
+              <span class="pill">${cards.length} available cards</span>
             </div>
           </div>
           <div class="metrics">

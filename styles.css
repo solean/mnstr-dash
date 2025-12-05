@@ -77,6 +77,8 @@ header {
   border-radius: 18px;
   padding: 22px 22px 18px;
   box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
 }
 
 .eyebrow {
@@ -100,6 +102,32 @@ h1 {
   color: var(--subtext);
   max-width: 650px;
   line-height: 1.5;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 16px;
+  align-items: center;
+}
+
+.hero-visual {
+  justify-self: end;
+}
+
+.card-image {
+  width: 100%;
+  max-width: 260px;
+  border-radius: 16px;
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--panel);
+}
+
+.card-image img {
+  width: 100%;
+  display: block;
 }
 
 .actions {
@@ -415,6 +443,17 @@ tr + tr td {
 @media (max-width: 640px) {
   body { padding: 18px 14px 34px; }
   header { padding: 18px 16px; }
+  .lede { display: none; }
   .metric strong { font-size: 18px; }
   th, td { font-size: 13px; }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-visual {
+    justify-self: start;
+  }
 }
