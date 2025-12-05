@@ -8,7 +8,7 @@
   --bg: radial-gradient(circle at 25% -10%, rgba(246, 201, 14, 0.18), transparent 30%), radial-gradient(circle at 75% 110%, rgba(13, 17, 28, 0.22), transparent 32%), #ffffff;
   --bg-base: #ffffff;
   --panel: #ffffff;
-  --panel-strong: #f1f5f9;
+  --panel-strong: #fbfbfb;
   --accent: #f6c90e;
   --accent-2: #0d111c;
   --text: #0b1120;
@@ -25,15 +25,15 @@
 :root[data-theme="dark"] {
   --bg: radial-gradient(circle at 50% -10%, rgba(246, 201, 14, 0.3), transparent 35%), radial-gradient(circle at 45% 120%, rgba(13, 17, 28, 0.3), transparent 38%), linear-gradient(140deg, #04060c, #0b0f1a 50%, #05070d 100%);
   --bg-base: #04060c;
-  --panel: rgba(255, 255, 255, 0.1);
-  --panel-strong: rgba(255, 255, 255, 0.18);
+  --panel: #0d0f15;
+  --panel-strong: #12151f;
   --accent: #f6c90e;
   --accent-2: #0d111c;
   --text: #fdfdfd;
   --subtext: #d8deef;
   --danger: #ffb3ba;
   --positive: #b7ffcf;
-  --border: rgba(255, 255, 255, 0.1);
+  --border: rgba(255, 255, 255, 0.14);
   --error-bg: rgba(255, 179, 186, 0.12);
   --error-border: rgba(255, 179, 186, 0.55);
   --shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
@@ -314,6 +314,7 @@ main {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  background: var(--panel-strong);
 }
 
 .card-toggle summary {
@@ -328,7 +329,7 @@ main {
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--accent);
+  /* color: var(--accent); */
 }
 
 .card-toggle summary::-webkit-details-marker {
