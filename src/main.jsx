@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import Chart from 'chart.js/auto';
+import { Analytics } from "@vercel/analytics/react"
 
 const BASE_URL = 'https://api.mnstr.xyz';
 const PRICE_URL = `${BASE_URL}/gacha/prices`;
@@ -342,12 +343,13 @@ const App = () => {
             metrics={metrics}
             curve={curve}
           />
-            ))}
-          </main>
+        ))}
+      </main>
 
-          {error ? <div className="error">{error}</div> : null}
-        </div>
-      );
-    };
+      {error ? <div className="error">{error}</div> : null}
+      <Analytics />
+    </div>
+  );
+};
 
 createRoot(document.getElementById('root')).render(<App />);
