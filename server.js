@@ -5,11 +5,11 @@ const app = express();
 const PORT = process.env.PORT || 3003;
 
 // Serve everything in the repo root (index.html, assets)
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Fallback to index for any unmatched route
 app.use((_req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
 app.listen(PORT, () => {
